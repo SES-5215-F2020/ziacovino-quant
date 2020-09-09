@@ -25,6 +25,7 @@ hh_vars_2017
 ```
 
 ## Choosing Variables
+<<<<<<< HEAD
 I selected seven variables between person-level and household-level analysis to examine issues of food insecurity, sex, race, family composition, and recently pregnant individuals.
 <br>
 <b> Person Data </b><br>
@@ -33,10 +34,20 @@ I selected seven variables between person-level and household-level analysis to 
 <li>Gave birth in the last 12 months [FER] (Categorical)
 <li>Sex [SEX] (Categorical)
 <li>Race [RAC1P] (Categorical)
+=======
+I selected six variables between person-level and household-level analysis to examine issues of food insecurity, sex, family composition, and recently pregnant individuals.
+<br>
+<b> Person Data </b><br>
+<ul>
+<li>Age [AGEP]
+<li> Gave birth in the last 12 months [FER]
+<li>Sex [SEX]
+>>>>>>> 31b667499aafa2a6d13fab67962ecdbca854527a
 </ul>
 
 <b> Household Data </b> <br>
 <ul>
+<<<<<<< HEAD
 <li>Related Children in the Household [NRC] (Continuous)
 <li>Receiving SNAP [FS] (Categorical)
 <li>Family Income [FINCP] (Categorical)
@@ -53,12 +64,36 @@ ma_fam_assist<- get_pums(variables = c("NRC",
                                 "FER",
                                 "AGEP",
                                 "RAC1P"
+=======
+<li>Related Children in the Household [NRC]
+<li>Receiving SNAP [FS]
+<li> Family Income [FINCP]
+</ul> 
+<b> Loading Data </b>
+<br>
+```{r loading personal level data from 2017 ACS1, results = 'hide', message=FALSE}
+person_data<-get_pums(variables = c("SEX",
+                                    "FER",
+                                    "AGEP"
+                                    ),
+                      state = "MA",
+                      year = 2017,
+                      survey = "acs1",
+                      recode = "TRUE") %>%
+             select(SEX_label, FER_label, AGEP)
+```
+```{r loading household level data from 2017 ACS1, results = 'hide', message=FALSE}
+hh_data<-get_pums(variables = c("NRC",
+                                "FS",
+                                "FINCP"
+>>>>>>> 31b667499aafa2a6d13fab67962ecdbca854527a
                                 ),
                       state = "MA",
                       year = 2017,
                       survey = "acs1",
                       recode = "TRUE") %>%
               filter(FINCP > 0) %>%
+<<<<<<< HEAD
               select(NRC, FS_label, FINCP, SEX_label, FER_label,   AGEP, RAC1P_label)
 
 ```
@@ -66,6 +101,15 @@ ma_fam_assist<- get_pums(variables = c("NRC",
 
 ```{r}
 ma_fam_assist
+=======
+              select(NRC, FS_label, FINCP)
+
+```
+
+```{r}
+person_data
+hh_data
+>>>>>>> 31b667499aafa2a6d13fab67962ecdbca854527a
 ```
 
 ## Some Questions
@@ -74,6 +118,9 @@ ma_fam_assist
  <li> How many new parents were income-eligible for SNAP but not receiving?
  <li> How many families would have been affected by the assistance cap in effect in MA in 2017? 
  <li> Is there any relationship between number of children in the household and family income?
+<<<<<<< HEAD
  <li> Does race have a measurable affect on access to SNAP for eligible families? For recent new parents?
  <li> Does family income tend to increase with age? If so are there factors that disrupt that trend?
+=======
+>>>>>>> 31b667499aafa2a6d13fab67962ecdbca854527a
  <br>

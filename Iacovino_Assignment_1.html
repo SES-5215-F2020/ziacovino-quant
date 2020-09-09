@@ -413,6 +413,7 @@ hh_vars_2017 &lt;- pums_variables %&gt;%
 </div>
 <div id="choosing-variables" class="section level2">
 <h2>Choosing Variables</h2>
+<<<<<<< HEAD
 I selected seven variables between person-level and household-level analysis to examine issues of food insecurity, sex, race, family composition, and recently pregnant individuals. <br> <b> Person Data </b><br>
 <ul>
 <li>
@@ -423,10 +424,21 @@ Gave birth in the last 12 months [FER] (Categorical)
 Sex [SEX] (Categorical)
 <li>
 Race [RAC1P] (Categorical)
+=======
+I selected six variables between person-level and household-level analysis to examine issues of food insecurity, sex, family composition, and recently pregnant individuals. <br> <b> Person Data </b><br>
+<ul>
+<li>
+Age [AGEP]
+<li>
+Gave birth in the last 12 months [FER]
+<li>
+Sex [SEX]
+>>>>>>> 31b667499aafa2a6d13fab67962ecdbca854527a
 </ul>
 <b> Household Data </b> <br>
 <ul>
 <li>
+<<<<<<< HEAD
 Related Children in the Household [NRC] (Continuous)
 <li>
 Receiving SNAP [FS] (Categorical)
@@ -441,12 +453,34 @@ Family Income [FINCP] (Categorical)
                                 &quot;FER&quot;,
                                 &quot;AGEP&quot;,
                                 &quot;RAC1P&quot;
+=======
+Related Children in the Household [NRC]
+<li>
+Receiving SNAP [FS]
+<li>
+Family Income [FINCP]
+</ul>
+<p><b> Loading Data </b> <br></p>
+<pre class="r"><code>person_data&lt;-get_pums(variables = c(&quot;SEX&quot;,
+                                    &quot;FER&quot;,
+                                    &quot;AGEP&quot;
+                                    ),
+                      state = &quot;MA&quot;,
+                      year = 2017,
+                      survey = &quot;acs1&quot;,
+                      recode = &quot;TRUE&quot;) %&gt;%
+             select(SEX_label, FER_label, AGEP)</code></pre>
+<pre class="r"><code>hh_data&lt;-get_pums(variables = c(&quot;NRC&quot;,
+                                &quot;FS&quot;,
+                                &quot;FINCP&quot;
+>>>>>>> 31b667499aafa2a6d13fab67962ecdbca854527a
                                 ),
                       state = &quot;MA&quot;,
                       year = 2017,
                       survey = &quot;acs1&quot;,
                       recode = &quot;TRUE&quot;) %&gt;%
               filter(FINCP &gt; 0) %&gt;%
+<<<<<<< HEAD
               select(NRC, FS_label, FINCP, SEX_label, FER_label,   AGEP, RAC1P_label)</code></pre>
 <pre class="r"><code>ma_fam_assist</code></pre>
 <pre><code>## # A tibble: 51,564 x 7
@@ -462,6 +496,38 @@ Family Income [FINCP] (Categorical)
 ##  8     4 No        22000 Male      N/A (less than 15 years/gr~    35 White alone
 ##  9     4 No        22000 Female    No                             30 White alone
 ## 10     4 No        22000 Male      N/A (less than 15 years/gr~     7 White alone
+=======
+              select(NRC, FS_label, FINCP)</code></pre>
+<pre class="r"><code>person_data</code></pre>
+<pre><code>## # A tibble: 69,635 x 3
+##    SEX_label FER_label                                             AGEP
+##    &lt;chr&gt;     &lt;chr&gt;                                                &lt;dbl&gt;
+##  1 Female    N/A (less than 15 years/greater than 50 years/ male)    53
+##  2 Male      N/A (less than 15 years/greater than 50 years/ male)    51
+##  3 Male      N/A (less than 15 years/greater than 50 years/ male)    26
+##  4 Male      N/A (less than 15 years/greater than 50 years/ male)    22
+##  5 Female    No                                                      17
+##  6 Male      N/A (less than 15 years/greater than 50 years/ male)    62
+##  7 Female    N/A (less than 15 years/greater than 50 years/ male)    58
+##  8 Female    N/A (less than 15 years/greater than 50 years/ male)    64
+##  9 Male      N/A (less than 15 years/greater than 50 years/ male)    68
+## 10 Female    No                                                      42
+## # ... with 69,625 more rows</code></pre>
+<pre class="r"><code>hh_data</code></pre>
+<pre><code>## # A tibble: 51,564 x 3
+##      NRC FS_label  FINCP
+##    &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt;
+##  1     1 No       143500
+##  2     1 No       143500
+##  3     1 No       143500
+##  4     1 No       143500
+##  5     1 No       143500
+##  6     1 Yes       10000
+##  7     1 Yes       10000
+##  8     4 No        22000
+##  9     4 No        22000
+## 10     4 No        22000
+>>>>>>> 31b667499aafa2a6d13fab67962ecdbca854527a
 ## # ... with 51,554 more rows</code></pre>
 </div>
 <div id="some-questions" class="section level2">
@@ -474,11 +540,15 @@ How many new parents were income-eligible for SNAP but not receiving?
 <li>
 How many families would have been affected by the assistance cap in effect in MA in 2017?
 <li>
+<<<<<<< HEAD
 Is there any relationship between number of children in the household and family income?
 <li>
 Does race have a measurable affect on access to SNAP for eligible families? For recent new parents?
 <li>
 <p>Does family income tend to increase with age? If so are there factors that disrupt that trend? <br></p>
+=======
+<p>Is there any relationship between number of children in the household and family income? <br></p>
+>>>>>>> 31b667499aafa2a6d13fab67962ecdbca854527a
 </div>
 
 
