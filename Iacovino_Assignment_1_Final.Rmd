@@ -25,12 +25,11 @@ hh_vars_2017
 ```
 
 ## Choosing Variables
-I selected seven variables between person-level and household-level analysis to examine issues of food insecurity, sex, race, family composition, and recently pregnant individuals.
 I selected seven variables between person-level and household-level analysis to examine issues of food insecurity, sex, race, family composition, and recently pregnant individuals. The resulting tibble has 51,564 observations of the 7 variables. 
 <br>
-<b> Person Data </b><br>
-<ul>
-<li>Age [AGEP] (Continuous)
+*Person Data*
+
+1. Age [AGEP] (Continuous)
 <li>Gave birth in the last 12 months [FER] (Categorical)
 <li>Sex [SEX] (Categorical)
 <li>Race [RAC1P] (Categorical)

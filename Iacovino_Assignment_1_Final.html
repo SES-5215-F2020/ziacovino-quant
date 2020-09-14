@@ -413,11 +413,9 @@ hh_vars_2017 &lt;- pums_variables %&gt;%
 </div>
 <div id="choosing-variables" class="section level2">
 <h2>Choosing Variables</h2>
-I selected seven variables between person-level and household-level analysis to examine issues of food insecurity, sex, race, family composition, and recently pregnant individuals. <br> <b> Person Data </b><br>
-I selected seven variables between person-level and household-level analysis to examine issues of food insecurity, sex, race, family composition, and recently pregnant individuals. The resulting tibble has 51,564 observations of the 7 variables. <br> <b> Person Data </b><br>
-<ul>
-<li>
-Age [AGEP] (Continuous)
+<p>I selected seven variables between person-level and household-level analysis to examine issues of food insecurity, sex, race, family composition, and recently pregnant individuals. The resulting tibble has 51,564 observations of the 7 variables. <br> <em>Person Data</em></p>
+<ol style="list-style-type: decimal">
+<li>Age [AGEP] (Continuous)
 <li>
 Gave birth in the last 12 months [FER] (Categorical)
 <li>
@@ -434,7 +432,8 @@ Receiving SNAP [FS] (Categorical)
 <li>
 Family Income [FINCP] (Categorical)
 </ul>
-<p><b> Compiling Data </b> <br></p>
+<b> Compiling Data </b> <br></li>
+</ol>
 <pre class="r"><code>ma_fam_assist&lt;- get_pums(variables = c(&quot;NRC&quot;,
                                 &quot;FS&quot;,
                                 &quot;FINCP&quot;,
