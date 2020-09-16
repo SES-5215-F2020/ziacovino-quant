@@ -19,6 +19,7 @@ hh_vars_2017 <- pums_variables %>%
 
 ```
 
+
 ```{r tibbles}
 person_vars_2017
 hh_vars_2017
@@ -27,44 +28,109 @@ hh_vars_2017
 ## Choosing Variables
 I selected seven variables between person-level and household-level analysis to examine issues of food insecurity, sex, race, family composition, and recently pregnant individuals. The resulting tibble has 51,564 observations of the 7 variables. 
 <br>
-*Person Data*
+<b>Person Data</b>
 
-1. Age [AGEP] (Continuous)
+<li>Age [AGEP] (Continuous)
 <li>Gave birth in the last 12 months [FER] (Categorical)
-<li>Sex [SEX] (Categorical)
-<li>Race [RAC1P] (Categorical)
+<li><strike>Sex [SEX] (Categorical) </strike>
+<li><strike> Race [RAC1P] (Categorical) </strike>
 </ul>
+<br>
 <b> Household Data </b> <br>
 <ul>
 <li>Related Children in the Household [NRC] (Continuous)
 <li>Receiving SNAP [FS] (Categorical)
-<li>Family Income [FINCP] (Categorical)
+<li>Family Income [FINCP] (Continuous)
+<li> Number of People in Household [NP] *New*
 </ul> 
 <b> Compiling Data </b>
 <br>
-```{r Selecting variables, results = 'hide', message=FALSE}
 
-ma_fam_assist<- get_pums(variables = c("NRC",
-                                "FS",
-                                "FINCP",
-                                "SEX",
+```{r Selecting variables, results = 'hide', message=FALSE}
+#Update 9/21: Converting all variables to household level. Filtering out households with no related children,  
+#First, I am pulling out my person level variables separately, making FER_label a binary,
+person_data<- get_pums(variables = c(
                                 "FER",
-                                "AGEP",
-                                "RAC1P"
+                                "AGEP"
                                    ),
                       state = "MA",
                       year = 2017,
+                      survey = "acs1"
+                      )%>%
+              mutate(FER = ifelse(FER == "b", 2, FER))%>%
+              mutate(FER = ifelse(FER == 2, 0, FER))%>%
+              group_by(SERIALNO)%>%
+              summarize(AGE = mean(AGEP),
+                        FERH = max(FER)
+                        )
+              
+person_data
+
+#what does the 2 in FER mean? 
+ugh <- get_pums(variables = "FER",
+                      state = "MA",
+                      year = 2017,
                       survey = "acs1",
-                      recode = "TRUE") %>%
-              filter(FINCP > 0) %>%
-              select(NRC, FS_label, FINCP, SEX_label, FER_label,AGEP, RAC1P_label)
+                      recode = TRUE
+                      )%>%
+      select(FER, FER_label)
+#Ah I see, instead of no = 0, they made no = 2. Rude. I will mutate all the b's to be 2, then mutate all the 2s to be 0s, so i can sum the household. Then, 1s will be households with a new baby and 0s will households without a new baby. 
+
+#Turns out actually, R is smart enough to stop me from trying math on a categorical variable. I can however, assign the highest value in the household with the max() function.
+
+
+ # pulling out select argument to see if I can get serial no select(SEX_label, FER_label, AGEP, RAC1P_label)%>% (It worked)
+
+#household level data: 
+#so after all that I think I can do these all together? If I have to group the Household together anyways? (It worked)
+ma_fam_assist_raw<- get_pums(variables = c("NRC",
+                                "FS",
+                                "FINCP",
+                                "NP",
+                                "FER",
+                                "AGEP"
+                                   ),
+                      state = "MA",
+                      year = 2017,
+                      survey = "acs1"
+                      )%>%
+                filter(NRC > 0, 
+                       FS != "b",
+                         ) %>%
+                mutate(FER = ifelse(FER == "b", 2, FER))%>%
+                mutate(FER = ifelse(FER == 2, 0, FER), 
+                       FINCP = ifelse(FINCP < 0, 0, FINCP),
+                       FS = ifelse(FS == 2, 0, FS))%>%
+                group_by(SERIALNO)%>%
+                summarize(
+                      KIDS = mean(NRC),
+                      SNAP = max(FS),
+                      FINC = sum (FINCP),
+                      NPL = mean(NP),
+                      AGE = mean(AGEP),
+                      FERH = max(FER)) %>%
+ select(KIDS, SNAP, FINC, NPL, AGE, FERH)
 
 ```
+Hooray! Now I have a data frame fully on household level analysis. In this next section, I am recoding the binary SNAP and FERH variables to answery "Is the household recieving SNAP?" and "Did someone in the household give birth in the last 12 months?"
+
+
+```{r Recoding my variables }
+ma_fam_assist <- ma_fam_assist_raw %>%
+  mutate(SNAP = ifelse(SNAP==0, "No", "Yes"),
+         FERH = ifelse(FERH==0, "No", "Yes"))%>%
+    select(KIDS, SNAP, FINC, NPL, AGE, FERH)
+
+ma_fam_assist
+```
+
+
+
 
 
 ```{r}
 ma_fam_assist
-write.csv(ma_fam_assist, "2017 ACS Family Assistance.csv")
+write.csv(ma_fam_assist, "2017 ACS Family Assistance Household.csv")
 ```
 
 

@@ -1,0 +1,190 @@
+---
+title: "Assignment 2"
+author: "Zoe Iacovino"
+date: "9/15/2020"
+output: html_document
+---
+
+```{r Loading Data, results='hide', message=FALSE}
+ma_fam_assist<- read.csv("2017 ACS Family Assistance.csv")
+ma_fam_assist
+library(ggplot2)
+library(ggthemes)
+library(tidyverse)
+```
+
+*<b>Statistical Analysis</b>*
+
+<b> Continuous Variables </b> <br>
+I started with summary, showing the quartile range, then the mean, the standard deviation and the 95% confidence range. 
+
+```{r Continuous variables}
+summary_NRC <- summary(ma_fam_assist$NRC)
+t_NRC<-t.test(ma_fam_assist$NRC)
+
+
+summary_FINCP <- summary(ma_fam_assist$FINCP)
+t_FINCP<- t.test(ma_fam_assist$FINCP)
+
+summary_AGEP <- summary(ma_fam_assist$AGEP)
+t_AGEP<- t.test(ma_fam_assist$AGEP) 
+
+contdis<- tibble(Variables = c("Number of Related Children", 
+                               "Annual Family Income",
+                               "Age"),
+      Mean = c(mean(ma_fam_assist$NRC),
+                mean(ma_fam_assist$FINCP),
+                mean(ma_fam_assist$AGEP)
+                ),
+      `1st Quartile` = c( summary_NRC[2],
+                          summary_FINCP[2],
+                          summary_AGEP[2]),
+      `Median` = c( summary_NRC[3],
+                          summary_FINCP[3],
+                          summary_AGEP[3]),
+      `3rd Quartile` = c( summary_NRC[4],
+                          summary_FINCP[4],
+                          summary_AGEP[4]),
+       `Standard Deviation` = c(sd(ma_fam_assist$NRC),
+                              sd(ma_fam_assist$FINCP),
+                              sd(ma_fam_assist$AGEP)
+                              ),
+       `Conf Range Low` = c(t_NRC$conf.int[1],
+                    t_FINCP$conf.int[1],
+                    t_AGEP$conf.int[1]),
+       `Conf Range High` = c(t_NRC$conf.int[2],
+                    t_FINCP$conf.int[2],
+                    t_AGEP$conf.int[2]) )
+knitr::kable(contdis, caption = "Distributions of Continuous Variables")
+
+```
+```{r}
+ggplot(data = ma_fam_assist, aes(x=NRC))+
+          geom_histogram()+
+          scale_y_continuous(name= "Frequency")+
+          scale_x_continuous(name= "Number of Related Children in Household",
+                             breaks = seq(0,11, by = 1))+
+    theme_few()
+```
+<br>Most households have no related children. Many have between 1 and 3, though that does not appear in the distribution metrics. It might be useful for analysis if the data only included households with children.
+```{r}
+ggplot(data = ma_fam_assist, aes(x=FINCP))+
+          geom_histogram()+
+          scale_y_continuous(name= "Frequency")+
+          scale_x_continuous(name= "Annual Family Income")+
+          geom_vline(aes(xintercept=mean(FINCP)),
+            color="blue", linetype="dashed", size=1)+
+          geom_vline(aes(xintercept=summary_FINCP[3]),
+            color="green", linetype="dashed", size=1)+
+          geom_vline(aes(xintercept=summary_FINCP[4]),
+            color="pink", linetype="dotted", size=1)+
+          geom_vline(aes(xintercept=summary_FINCP[2]),
+            color="pink", linetype="dotted", size=1)+
+theme_few()
+```
+<br>Annual family income, as would be expected, a right skewed distribution. The green line shows the median, while the blue line shows the mean. The pink dotted lines show the 1st and 3rd quartile ranges, which demonstrate how most incomes fall in a range realtively smaller than the full range of the data. 
+```{r}
+ggplot(data = ma_fam_assist, aes(x=AGEP))+
+          geom_histogram()+
+          scale_y_continuous(name= "Frequency")+
+          scale_x_continuous(name= "Age of Massachusetts",
+                             breaks = seq(0,100, by = 5))+     
+          geom_vline(aes(xintercept=mean(AGEP)),
+            color="blue", linetype="dashed", size=1)+
+          geom_vline(aes(xintercept=summary_AGEP[3]),
+            color="green", linetype="dashed", size=1)+
+          geom_vline(aes(xintercept=summary_AGEP[4]),
+            color="pink", linetype="dotted", size=1)+
+          geom_vline(aes(xintercept=summary_AGEP[2]),
+            color="pink", linetype="dotted", size=1)+
+          
+theme_few()
+```
+<br>The most interesting stat here is that exactly 25% of Massachusetts is under 18. What doesn't really make sense to me is how the 3rd quartile is less than the median. 
+
+<b>Categorical Variables</b>
+
+```{r Categorical Variables}
+races <- unique(ma_fam_assist$RAC1P_label)
+White <- t.test(ma_fam_assist$RAC1P_label == races[1])
+Black <- t.test(ma_fam_assist$RAC1P_label == races[2])
+Asian <- t.test(ma_fam_assist$RAC1P_label == races[3])
+Multiracial <-  t.test(ma_fam_assist$RAC1P_label == races[4])
+Other <-  t.test(ma_fam_assist$RAC1P_label == races[5])
+AmerIndian <-  t.test(ma_fam_assist$RAC1P_label == races[6])
+Pacific <-  t.test(ma_fam_assist$RAC1P_label == races[8])
+shares <- tibble(Races = c("White", 
+                            "Black", 
+                            "Asian",
+                            "Multiracial",
+                            "Other",
+                           "American Indian",
+                           "Pacific Islander/Native Hawaiian"),
+                 `Share` = c(White$estimate, 
+                             Black$estimate,
+                             Asian$estimate,
+                             Multiracial$estimate,
+                             Other$estimate,
+                             AmerIndian$estimate,
+                             Pacific$estimate),
+                 Low = c(White$conf.int[1],
+                         Black$conf.int[1],
+                         Asian$conf.int[1],
+                         Multiracial$conf.int[1],
+                         Other$conf.int[1],
+                         AmerIndian$conf.int[1],
+                         Pacific$conf.int[1]),
+                 High = c(White$conf.int[2],
+                         Black$conf.int[2],
+                         Asian$conf.int[2],
+                         Multiracial$conf.int[2],
+                         Other$conf.int[2],
+                         AmerIndian$conf.int[2],
+                         Pacific$conf.int[2]))
+knitr::kable(shares, caption = "Proportions and 95-percent confidence intervals")
+```
+
+```{r }
+birth <- unique(ma_fam_assist$FER_label)
+N_A <- t.test(ma_fam_assist$FER_label == birth[1])
+NoBirth <- t.test(ma_fam_assist$FER_label == birth[2])
+YesBirth <- t.test(ma_fam_assist$FER_label == birth[3])
+shares_b <- tibble(Birth = c("N/A: Male, child, over 50", 
+                            "No Birth in last 12 Months", 
+                            "Gave Birth in last 12 Months"
+                            ),
+                 `Share` = c(N_A$estimate, 
+                             NoBirth$estimate,
+                             YesBirth$estimate
+                             ),
+                 Low = c(N_A$conf.int[1],
+                         NoBirth$conf.int[1],
+                         YesBirth$conf.int[1]
+                         ),
+                 High = c(N_A$conf.int[2],
+                         NoBirth$conf.int[2],
+                         YesBirth$conf.int[2]
+                         ))
+knitr::kable(shares_b, caption = "Proportions and 95-percent confidence intervals")
+```
+
+```{r}
+snap <- unique(ma_fam_assist$FS_label)
+snap_t <- t.test(ma_fam_assist$FS_label == snap[1])
+snap_tt <- t.test(ma_fam_assist$FS_label == snap[2])
+shares_t <- tibble(SNAP = c("Not receiving SNAP", 
+                            "Recieving SNAP" 
+                            ),
+                 `Share` = c(snap_t$estimate,
+                             snap_tt$estimate
+                             ),
+                 Low = c(snap_t$conf.int[1],
+                         snap_tt$conf.int[1]
+                         ),
+                 High = c(
+                         snap_t$conf.int[2],
+                         snap_tt$conf.int[2]
+                         ))
+knitr::kable(shares_t, caption = "Proportions and 95-percent confidence intervals")
+```
+
