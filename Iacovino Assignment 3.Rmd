@@ -1,0 +1,233 @@
+---
+title: "Assignment 3"
+author: "Zoe Iacovino"
+date: "9/20/2020"
+output: html_document
+---
+```{r Loading Data }
+library(tidyverse)
+library(ggplot2)
+mfa<- read.csv("2017 ACS Family Assistance Household.csv")
+```
+
+# Relationships between Variables
+Because the dataframe I made in <a href= "https://ses-5215-f2020.github.io/ziacovino-quant/Iacovino_Assignment_1_Final.html"> Assignment 1 </a> was a mix of person and household level analysis, I aggregated the person level data that I could, which meant getting rid of the sex and race variables. If I have time to figure out how to code a majority race of household variable I will--but for now my variables are now: 
+```{r}
+head(mfa)
+```
+
+
+#Correlations 
+<ul>
+<li> Age [AGE] on Income [FINC] (this one doesn't make any sense because AGE is now the average age of the houseshold)
+<li> Age [AGE] on Number of Related Children [KIDS] (same issue)
+<li> Annual Family Income [FINC] on Number of Related Children [KIDS]
+</ul>
+```{r}
+#Age on Income 
+correlation_aoi <- cor.test(mfa$AGE, mfa$FINC)
+
+correlation_aoi
+ggplot(mfa, aes(x = AGE, y = FINC)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Average Houeshold Age") +
+  scale_y_continuous(name = "Annual Family Income") +
+  annotate(geom = "text", x = 0, y = 50000, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(correlation_aoi$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(correlation_aoi$conf.int[2], digits = 2)),
+           hjust = 0)
+  
+```
+
+
+```{r}
+#Age on Number of Related Children
+correlation_aoc <- cor.test(mfa$AGE, mfa$KIDS)
+
+correlation_aoc
+ggplot(mfa, aes(x = AGE, y = KIDS)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Average Household Age") +
+  scale_y_continuous(name = "Number of Related Children in Household") +
+  annotate(geom = "text", x = 0, y = 12, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(correlation_aoc$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(correlation_aoc$conf.int[2], digits = 2)),
+           hjust = 0)
+```
+
+```{r}
+#Annual Family Income on Number of Related Children
+correlation_foc <- cor.test(mfa$FINC, mfa$KIDS)
+
+correlation_foc
+ggplot(mfa, aes(x = FINC, y = KIDS)) +
+  geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
+  geom_smooth() +
+  theme_bw() +
+  scale_x_continuous(name = "Annual Family Income") +
+  scale_y_continuous(name = "Number of Related Children in Household") +
+  annotate(geom = "text", x = 0, y = 11, 
+           label = paste("Correlation (95-percent confidence):",
+                         prettyNum(correlation_foc$conf.int[1], digits = 2), 
+                         "to",
+                         prettyNum(correlation_foc$conf.int[2], digits = 2)),
+           hjust = 0)
+```
+#Two-Sample T-Tests 
+oh not good
+Yeah, I am pretty lost on this one, I keep getting the error that 'grouping factor must have exactly 2 levels'. I thought that would be solved once I had a proper binary but I guess not. Eventually I will have to do: 
+
+<ul>
+<li> Snap Recipients [SNAP] on Number of Related Children [KIDS]
+<li> New Baby [FERH] on Number of Related Children [KIDS]
+<li> SNap Recipients [SNAP] on Family Income [FINC]
+<li> New Baby [FERH] on Family Income [FINC]
+<li> Snap Recipients [SNAP] on Age [AGE]
+<li> New Baby [FERH] on Age [AGE]
+</ul>
+```{r}
+#SNAP Recipients on Number of Related Children
+
+difference <- t.test(KIDS ~ SNAP == "Does this work or not?",
+                    data = mfa)
+
+difference
+
+ggplot(mfa, aes(x = FS_label, y = NRC)) +
+  geom_violin() +
+  theme_bw() +
+  scale_x_discrete(name = "Do families with more children recieve SNAP?",
+                   labels = c("No", "Yes")) +
+   scale_y_continuous(name = "Gross monthly rent", 
+                     breaks = seq(0, 6000, by = 500),
+                     labels = paste("$", 
+                                    prettyNum(seq(0, 6000, by = 500),
+                                              big.mark = ","))) +
+  annotate(geom = "text", x = 1.5, y = 2500, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n$",
+                         prettyNum(abs(difference$conf.int[2]), 
+                                   digits = 0), " to $",
+                         prettyNum(abs(difference$conf.int[1]), 
+                                   digits = 0),
+                         sep = "")) +
+  annotate(geom = "text", x = 1, y = difference$estimate[1], size = 3,
+           label = paste("Mean (95% confidence):\n$",
+                         prettyNum(difference$estimate[1], digits = 0))) +
+  annotate(geom = "text", x = 2, y = difference$estimate[2], size = 3,
+           label = paste("Mean (95% confidence):\n$",
+                         prettyNum(difference$estimate[2], digits = 0)))
+
+```
+
+#ANOVA
+I technically shouldn't have anything with more than three categories? 
+
+
+```{r}
+#SNAP Recipient on Number of Related Children
+anova_sok <- aov(KIDS ~ SNAP, data = mfa)
+
+summary(anova_sok)
+#              Df Sum Sq Mean Sq F value   Pr(>F)    
+#SNAP           1     36   36.19   49.43 2.25e-12 ***
+#Residuals   7040   5154    0.73                     
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+differences_sok <- TukeyHSD(anova_sok)
+
+as_tibble(cbind(pair = row.names(differences_sok$FS_label),
+                differences_sok$FS_label))
+
+ggplot(mfa, aes(x = SNAP, y = KIDS)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_x_discrete(name = "Recieving SNAP") +
+  scale_y_continuous(name = "Number of Related Children", 
+                     breaks = seq(0, 12, by = 1),
+                     labels = paste(prettyNum(seq(0, 12, by = 1)
+                                              )))
+
+```
+
+
+```{r}
+#New Baby on Number of Related Children
+
+anova_fer <- aov(KIDS ~ FERH, data = mfa)
+
+summary(anova_fer)
+#               Df Sum Sq Mean Sq F value Pr(>F)    
+#FERH           1      5   4.667   6.336 0.0119 *
+#Residuals   7040   5186   0.737                 
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+differences_fer <- TukeyHSD(anova_fer)
+
+as_tibble(cbind(pair = row.names(differences_fer$FER_label),
+                differences_fer$FER_label))
+
+ggplot(mfa, aes(x = FERH, y = KIDS)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 0)) +
+  scale_x_discrete(name = "Had a Child in the last 12 months") +
+  scale_y_continuous(name = "Number of Related Children", 
+                     breaks = seq(0, 12, by = 1),
+                     labels = paste(prettyNum(seq(0, 12, by = 1)
+                                              )))
+```
+
+
+
+```{r}
+#New Baby on Income
+anova_inc <- aov(FINC ~ FERH, data = mfa)
+
+summary(anova_inc)
+#              Df    Sum Sq   Mean Sq F value Pr(>F)  
+#FERH           1 2.035e+12 2.035e+12   5.597  0.018 *
+#Residuals   7040 2.560e+15 3.636e+11                 
+#---
+#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+differences_inc <- TukeyHSD(anova_inc)
+
+as_tibble(cbind(pair = row.names(differences_inc$FER_label),
+                differences_inc$FER_label))
+
+ggplot(mfa, aes(x = FERH, y = FINC)) +
+  geom_boxplot() +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 0)) +
+  scale_x_discrete(name = "Had a Child in the Last 12 Months") +
+  scale_y_continuous(name = "Annual Family Income", 
+                     breaks = seq(0, 7000000, 10000),
+                     labels = paste(prettyNum(seq(0, 7000000, 10000)
+                                              )))
+
+```
+
+
+#Chi Squared
+```{r}
+#New Baby in last 12 Months on Snap Recipients
+chi_sq_fer <- chisq.test(mfa$FERH, mfa$SNAP == 
+                       "oh its something'") 
+
+chi_sq_fer
+
+chi_sq_fer$observed
+chi_sq_fer$expected
+```
+
