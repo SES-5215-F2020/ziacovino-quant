@@ -4,9 +4,11 @@ author: "Zoe Iacovino"
 date: "9/20/2020"
 output: html_document
 ---
-```{r Loading Data }
+```{r Loading Data, results='hide', message=FALSE}
 library(tidyverse)
 library(ggplot2)
+library(ggthemes)
+library (ggmosaic)
 mfa<- read.csv("2017 ACS Family Assistance Household.csv")
 ```
 
@@ -17,13 +19,16 @@ head(mfa)
 ```
 
 
-#Correlations 
-<ul>
+## Correlations 
+<br> <ul>
 <li> Age [AGE] on Income [FINC] (this one doesn't make any sense because AGE is now the average age of the houseshold)
 <li> Age [AGE] on Number of Related Children [KIDS] (same issue)
 <li> Annual Family Income [FINC] on Number of Related Children [KIDS]
+<li> Number of People in Household [NPL] on Age [AGE]
+<li> Number of People in Household [NPL] on Number of Related Children [KIDS]
+<li> Number of People in Household [NPL] on Annual Family Income [FINC]
 </ul>
-```{r}
+```{r Correlation 1}
 #Age on Income 
 correlation_aoi <- cor.test(mfa$AGE, mfa$FINC)
 
@@ -31,10 +36,10 @@ correlation_aoi
 ggplot(mfa, aes(x = AGE, y = FINC)) +
   geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
   geom_smooth() +
-  theme_bw() +
+  theme_few() +
   scale_x_continuous(name = "Average Houeshold Age") +
   scale_y_continuous(name = "Annual Family Income") +
-  annotate(geom = "text", x = 0, y = 50000, 
+  annotate(geom = "text", x = 20, y= 6e+06,
            label = paste("Correlation (95-percent confidence):",
                          prettyNum(correlation_aoi$conf.int[1], digits = 2), 
                          "to",
@@ -42,9 +47,11 @@ ggplot(mfa, aes(x = AGE, y = FINC)) +
            hjust = 0)
   
 ```
+<br>
+With a low p-value and and correlation estimate, I can say the relationship between average household age and income is weak, and that weak relationship is significant. 
+<br>
 
-
-```{r}
+```{r Correlation 2}
 #Age on Number of Related Children
 correlation_aoc <- cor.test(mfa$AGE, mfa$KIDS)
 
@@ -62,8 +69,11 @@ ggplot(mfa, aes(x = AGE, y = KIDS)) +
                          prettyNum(correlation_aoc$conf.int[2], digits = 2)),
            hjust = 0)
 ```
+<br>
+With a low p-value and a correlation estimate of about -.45, I can say there is a statistically significant relationship between the average age of the household and the number of children that suggests more kids in the household correlates with lower average household. Logically, and mathematically, this makes sense and is not in itself very interesting.   
+<br>
 
-```{r}
+```{r Correlation 3}
 #Annual Family Income on Number of Related Children
 correlation_foc <- cor.test(mfa$FINC, mfa$KIDS)
 
@@ -71,65 +81,344 @@ correlation_foc
 ggplot(mfa, aes(x = FINC, y = KIDS)) +
   geom_point(size = 0.5, alpha = 0.25, position = "jitter") +
   geom_smooth() +
-  theme_bw() +
+  theme_few() +
   scale_x_continuous(name = "Annual Family Income") +
   scale_y_continuous(name = "Number of Related Children in Household") +
-  annotate(geom = "text", x = 0, y = 11, 
+  annotate(geom = "text", x = 2e+06, y = 11, 
            label = paste("Correlation (95-percent confidence):",
                          prettyNum(correlation_foc$conf.int[1], digits = 2), 
                          "to",
                          prettyNum(correlation_foc$conf.int[2], digits = 2)),
            hjust = 0)
 ```
-#Two-Sample T-Tests 
-oh not good
-Yeah, I am pretty lost on this one, I keep getting the error that 'grouping factor must have exactly 2 levels'. I thought that would be solved once I had a proper binary but I guess not. Eventually I will have to do: 
+<br> The p-value is low, so the relationship is statistically significant. The correlation is about .23, not particularly strong but there is some kind of relationship.
+<br>
+
+```{r Correlation 4}
+# Number of People on Age
+correlation_noa <- cor.test(mfa$NPL, mfa$AGE)
+
+correlation_noa
+
+```
+<br> Unsurprisingly, the number of people in a household does not have a strong correlation with the average age. A low p-value suggests that this weak relationship is statistically significant. 
+<br>
+
+```{r Correlation 5}
+# Number of People on Number of Related Children
+correlation_nok <- cor.test(mfa$NPL, mfa$KIDS)
+
+correlation_nok
+
+```
+<br> Also unsurprisingly, the number of people in the household has a strong correlation with the number of kids in the household. The low p-value suggests this finding is statistically significant. 
+<br>
+
+```{r Correlation 6}
+# Number of People on Annual Family Income
+correlation_noi <- cor.test(mfa$NPL, mfa$FINC)
+
+correlation_noi
+
+```
+<br>A positive correlation here suggests what also makes sense logically, more people in the household leads to higher annual household income. There is enough distribution among income levels that the correlation is a little weaker, but the low p-value suggests at least that it is statistically significant. 
+<br>
+
+## Two-Sample T-Tests 
 
 <ul>
 <li> Snap Recipients [SNAP] on Number of Related Children [KIDS]
 <li> New Baby [FERH] on Number of Related Children [KIDS]
-<li> SNap Recipients [SNAP] on Family Income [FINC]
+<li> Snap Recipients [SNAP] on Family Income [FINC]
 <li> New Baby [FERH] on Family Income [FINC]
 <li> Snap Recipients [SNAP] on Age [AGE]
 <li> New Baby [FERH] on Age [AGE]
+<li> Snap Recipients [SNAP] on Number of People in House [NPL]
+<li> New Baby [FERH] on Number of People in House [NPL]
 </ul>
-```{r}
+```{r Two Sample 1}
 #SNAP Recipients on Number of Related Children
 
-difference <- t.test(KIDS ~ SNAP == "Does this work or not?",
+difference <- t.test(KIDS ~ SNAP,
                     data = mfa)
 
 difference
 
-ggplot(mfa, aes(x = FS_label, y = NRC)) +
+ggplot(mfa, aes(x = SNAP, y = KIDS)) +
   geom_violin() +
-  theme_bw() +
+  theme_few() +
   scale_x_discrete(name = "Do families with more children recieve SNAP?",
                    labels = c("No", "Yes")) +
-   scale_y_continuous(name = "Gross monthly rent", 
-                     breaks = seq(0, 6000, by = 500),
-                     labels = paste("$", 
-                                    prettyNum(seq(0, 6000, by = 500),
-                                              big.mark = ","))) +
-  annotate(geom = "text", x = 1.5, y = 2500, size = 3,
-           label = paste("Difference in means\n(95% confidence):\n$",
+  scale_y_continuous(name = "Number of Related Kids", 
+                     breaks = seq(0, 12, by = 1),
+                     labels = paste( prettyNum(seq(0, 12, by = 1)))) +
+  annotate(geom = "text", x = 1.5, y = 9, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n",
                          prettyNum(abs(difference$conf.int[2]), 
-                                   digits = 0), " to $",
+                                   digits = 0), " to ",
                          prettyNum(abs(difference$conf.int[1]), 
                                    digits = 0),
                          sep = "")) +
-  annotate(geom = "text", x = 1, y = difference$estimate[1], size = 3,
-           label = paste("Mean (95% confidence):\n$",
+  annotate(geom = "text", x = 1, y = difference$estimate[1], size = 3, 
+                  color = "red",
+           label = paste("Mean (95% confidence):\n",
                          prettyNum(difference$estimate[1], digits = 0))) +
   annotate(geom = "text", x = 2, y = difference$estimate[2], size = 3,
-           label = paste("Mean (95% confidence):\n$",
+           color = "red",
+           label = paste("Mean (95% confidence):\n",
                          prettyNum(difference$estimate[2], digits = 0)))
 
 ```
+<br>On average, it seems the answer would be no. There is a slight increase at 8 children, but clearly with identical means, the size of one's household has little to do with  whether or not one recieves food assistance. A low p-value suggests that this finding is statistically significant. 
+<br>
 
-#ANOVA
-I technically shouldn't have anything with more than three categories? 
+```{r Two Sample 2}
+#New Baby on Number of Related Children
 
+difference_fok <- t.test(KIDS ~ FERH,
+                    data = mfa)
+
+difference
+
+ggplot(mfa, aes(x = FERH, y = KIDS)) +
+  geom_violin() +
+  theme_few() +
+  scale_x_discrete(name = "Did families with more children have a child in the last 12 months?",
+                   labels = c("No", "Yes")) +
+  scale_y_continuous(name = "Number of Related Kids", 
+                     breaks = seq(0, 12, by = 1),
+                     labels = paste( prettyNum(seq(0, 12, by = 1)))) +
+  annotate(geom = "text", x = 1.5, y = 9, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n",
+                         prettyNum(abs(difference_fok$conf.int[2]), 
+                                   digits = 0), " to ",
+                         prettyNum(abs(difference_fok$conf.int[1]), 
+                                   digits = 0),
+                         sep = "")) +
+  annotate(geom = "text", x = 1, y = 5, size = 3, 
+                  color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_fok$estimate[1], digits = 0))) +
+  annotate(geom = "text", x = 2, y =5, size = 3,
+           color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_fok$estimate[2], digits = 0)))
+
+```
+<br> As above, having a child in the last year or not does not really affect the average household's number of children. Most of the households who welcomed a new baby appear to have six or fewer children, but the mean for each group is still 2. The low p-value suggests that this finding is statistically significant. 
+<br>
+
+```{r Two Sample 3}
+#Snap Recipients on Family Income
+
+difference_soi <- t.test(FINC ~ SNAP, data = mfa)
+
+difference_soi
+
+ggplot(mfa, aes(x = SNAP, y = FINC)) +
+  geom_violin() +
+  theme_few() +
+  scale_x_discrete(name = "Do households with higher annual incomes recieve SNAP?",
+                   labels = c("No", "Yes")) +
+  scale_y_continuous(name = "Annual Family Income", 
+                     breaks = seq(0, 7000000, by = 1000000),
+                     labels = paste( prettyNum(seq(0, 7000000, by = 1000000)))) +
+  annotate(geom = "text", x = 1.5, y = 6e+06, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n",
+                         prettyNum(abs(difference_soi$conf.int[2]), 
+                                   digits = 0), " to ",
+                         prettyNum(abs(difference_soi$conf.int[1]), 
+                                   digits = 0),
+                         sep = "")) +
+  annotate(geom = "text", x = 1, y = 3e+06, size = 3, 
+                  color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_soi$estimate[1], digits = 0))) +
+  annotate(geom = "text", x = 2, y =3e+06, size = 3,
+           color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_soi$estimate[2], digits = 0)))
+
+```
+<br> We see some variation when income is taken into account. As we might expect, assistance where eligibility is based income means households recieving SNAP have a lower average income. What is interesting, is the overlap in distribution that suggests folks who are eligible are not recieving. 
+<br>
+
+```{r Two Sample 4}
+#New Baby on Family Income
+
+difference_foi <- t.test(FINC ~ FERH, data = mfa)
+
+difference_foi
+
+ggplot(mfa, aes(x = FERH, y = FINC)) +
+  geom_violin() +
+  theme_few() +
+  scale_x_discrete(name = "Do families with higher incomes have a child in the last 12 months?",
+                   labels = c("No", "Yes")) +
+  scale_y_continuous(name = "Annual Family Income", 
+                     breaks = seq(0, 7000000, by = 1000000),
+                     labels = paste( prettyNum(seq(0, 7000000, by = 1000000)))) +
+  annotate(geom = "text", x = 1.5, y = 6e+06, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n",
+                         prettyNum(abs(difference_foi$conf.int[2]), 
+                                   digits = 0), " to ",
+                         prettyNum(abs(difference_foi$conf.int[1]), 
+                                   digits = 0),
+                         sep = "")) +
+  annotate(geom = "text", x = 1, y = 3e+06, size = 3, 
+                  color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_foi$estimate[1], digits = 0))) +
+  annotate(geom = "text", x = 2, y =3e+06, size = 3,
+           color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_foi$estimate[2], digits = 0)))
+
+```
+<br> The p-value is not super low, but  we might still say the finding is somewhat statistically significant. The two groups look very similar, but the yes group has a slightly lower average income. A possible conclusion could be that income does not really affect whether or not household has a baby. 
+
+
+
+```{r Twp Sample 5}
+#SNAP Recipients on Age
+
+difference_soa <- t.test(AGE ~ SNAP, data = mfa)
+
+difference_soa
+
+ggplot(mfa, aes(x = SNAP, y = AGE)) +
+  geom_violin() +
+  theme_few() +
+  scale_x_discrete(name = "Do households with higher average ages recieve snap?",
+                   labels = c("No", "Yes")) +
+  scale_y_continuous(name = "Average  Household Age", 
+                     breaks = seq(0, 80, by = 10),
+                     labels = paste( prettyNum(seq(0, 80, by = 10)))) +
+  annotate(geom = "text", x = 1.5, y = 40, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n",
+                         prettyNum(abs(difference_soa$conf.int[2]), 
+                                   digits = 0), " to ",
+                         prettyNum(abs(difference_soa$conf.int[1]), 
+                                   digits = 0),
+                         sep = "")) +
+  annotate(geom = "text", x = 1, y = 30, size = 3, 
+                  color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_soa$estimate[1], digits = 0))) +
+  annotate(geom = "text", x = 2, y =30, size = 3,
+           color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_soa$estimate[2], digits = 0)))
+
+```
+<br>This is interesting, households receiving SNAP are a little younger, and seem to cut off as the household gets older. A confounding aspect of this is households with a baby less than 1 year are going to skew much younger than the rest of population, because my age variable is an average of the household. The p-value is low, so we can assume this finding is statistically significant. 
+<br>
+
+```{r Twp Sample 6}
+#New Baby on Age
+
+difference_foa <- t.test(AGE ~ FERH, data = mfa)
+
+difference_foa
+
+ggplot(mfa, aes(x = FERH, y = AGE)) +
+  geom_violin() +
+  theme_few() +
+  scale_x_discrete(name = "Did the household have a new baby in the last year?",
+                   labels = c("No", "Yes")) +
+  scale_y_continuous(name = "Average  Household Age", 
+                     breaks = seq(0, 80, by = 10),
+                     labels = paste( prettyNum(seq(0, 80, by = 10)))) +
+  annotate(geom = "text", x = 1.5, y = 40, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n",
+                         prettyNum(abs(difference_foa$conf.int[2]), 
+                                   digits = 0), " to ",
+                         prettyNum(abs(difference_foa$conf.int[1]), 
+                                   digits = 0),
+                         sep = "")) +
+  annotate(geom = "text", x = 1, y = 20, size = 3, 
+                  color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_foa$estimate[1], digits = 0))) +
+  annotate(geom = "text", x = 2, y =20, size = 3,
+           color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_foa$estimate[2], digits = 0)))
+
+```
+<br>A low p-value suggests that this is statistically significant: households with a new baby have a lower average age. As with the Age/SNAP analysis, the age cuts off pretty abruptly. 
+<br>
+
+```{r Two Sample 7}
+#SNAP on Number of People in House
+
+difference_son <- t.test(NPL ~ SNAP, data = mfa)
+
+difference_son
+
+ggplot(mfa, aes(x = SNAP, y = NPL)) +
+  geom_violin() +
+  theme_few() +
+  scale_x_discrete(name = "Does the houeshold recieve SNAP?",
+                   labels = c("No", "Yes")) +
+  scale_y_continuous(name = "Number of people in House", 
+                     breaks = seq(0, 20, by = 2),
+                     labels = paste( prettyNum(seq(0, 20, by = 2)))) +
+  annotate(geom = "text", x = 1.5, y = 13, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n",
+                         prettyNum(abs(difference_son$conf.int[2]), 
+                                   digits = 0), " to ",
+                         prettyNum(abs(difference_son$conf.int[1]), 
+                                   digits = 0),
+                         sep = "")) +
+  annotate(geom = "text", x = 1.25, y = 8, size = 3, 
+                  color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_son$estimate[1], digits = 0))) +
+  annotate(geom = "text", x = 2.25, y =8, size = 3,
+           color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_son$estimate[2], digits = 0)))
+```
+<br>Recieving SNAP not only does not seem to have any relationship with the household size, but anything shown here is not very statistically significant. However the graphs look pretty different between SNAP and not, which is interesting.
+<br>
+```{r Two Sample 8}
+#New Baby on Number of People in House
+
+difference_fon <- t.test(NPL ~ FERH, data = mfa)
+
+difference_fon
+
+ggplot(mfa, aes(x = FERH, y = NPL)) +
+  geom_violin() +
+  theme_few() +
+  scale_x_discrete(name = "Does the Houeshold have a New Baby?",
+                   labels = c("No", "Yes")) +
+  scale_y_continuous(name = "Number of people in House", 
+                     breaks = seq(0, 20, by = 2),
+                     labels = paste( prettyNum(seq(0, 20, by = 2)))) +
+  annotate(geom = "text", x = 1.5, y = 13, size = 3,
+           label = paste("Difference in means\n(95% confidence):\n",
+                         prettyNum(abs(difference_fon$conf.int[2]), 
+                                   digits = 0), " to ",
+                         prettyNum(abs(difference_fon$conf.int[1]), 
+                                   digits = 0),
+                         sep = "")) +
+  annotate(geom = "text", x = 1.25, y = 8, size = 3, 
+                  color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_fon$estimate[1], digits = 0))) +
+  annotate(geom = "text", x = 2.25, y =8, size = 3,
+           color = "red",
+           label = paste("Mean (95% confidence):\n",
+                         prettyNum(difference_fon$estimate[2], digits = 0)))
+```
+<br>The low p-value suggests this finding is statistically significant. Having a child in the last year does not make a huge difference for the average number of people in the house for the population. However, as the chart above, there does seem to be a difference in the distribution of the population. 
+<br>
+
+# ANOVA
+
+None of my  categorical variables have more than two levels, so ANOVA is not the best form of analysis for my data. In the interest of practice, I have done SNAP recipients and Number of Related Children as a example.
 
 ```{r}
 #SNAP Recipient on Number of Related Children
@@ -158,76 +447,24 @@ ggplot(mfa, aes(x = SNAP, y = KIDS)) +
                                               )))
 
 ```
+<br>The result is statistically significant, and it does show pretty clearly that most households only have 1 or 2 children regardless of SNAP. Notably, SNAP recipients do include larger families. 
+<br>
 
-
-```{r}
-#New Baby on Number of Related Children
-
-anova_fer <- aov(KIDS ~ FERH, data = mfa)
-
-summary(anova_fer)
-#               Df Sum Sq Mean Sq F value Pr(>F)    
-#FERH           1      5   4.667   6.336 0.0119 *
-#Residuals   7040   5186   0.737                 
-#---
-#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-differences_fer <- TukeyHSD(anova_fer)
-
-as_tibble(cbind(pair = row.names(differences_fer$FER_label),
-                differences_fer$FER_label))
-
-ggplot(mfa, aes(x = FERH, y = KIDS)) +
-  geom_boxplot() +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 0)) +
-  scale_x_discrete(name = "Had a Child in the last 12 months") +
-  scale_y_continuous(name = "Number of Related Children", 
-                     breaks = seq(0, 12, by = 1),
-                     labels = paste(prettyNum(seq(0, 12, by = 1)
-                                              )))
-```
-
-
-
-```{r}
-#New Baby on Income
-anova_inc <- aov(FINC ~ FERH, data = mfa)
-
-summary(anova_inc)
-#              Df    Sum Sq   Mean Sq F value Pr(>F)  
-#FERH           1 2.035e+12 2.035e+12   5.597  0.018 *
-#Residuals   7040 2.560e+15 3.636e+11                 
-#---
-#Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
-
-differences_inc <- TukeyHSD(anova_inc)
-
-as_tibble(cbind(pair = row.names(differences_inc$FER_label),
-                differences_inc$FER_label))
-
-ggplot(mfa, aes(x = FERH, y = FINC)) +
-  geom_boxplot() +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 0)) +
-  scale_x_discrete(name = "Had a Child in the Last 12 Months") +
-  scale_y_continuous(name = "Annual Family Income", 
-                     breaks = seq(0, 7000000, 10000),
-                     labels = paste(prettyNum(seq(0, 7000000, 10000)
-                                              )))
-
-```
-
-
-#Chi Squared
+# Chi Squared
 ```{r}
 #New Baby in last 12 Months on Snap Recipients
-chi_sq_fer <- chisq.test(mfa$FERH, mfa$SNAP == 
-                       "oh its something'") 
+chi_sq_fer <- chisq.test(mfa$SNAP, mfa$FERH ) 
 
 chi_sq_fer
 
 chi_sq_fer$observed
-chi_sq_fer$expected
 ```
 
+
+```{r}
+chi_sq_fer$expected
+```
+<br>The Chi-Squared test suggests that we would see a difference of about 30 households if there were no relationship between the two conditions. Compared to the size of the population examined, that is not very many, and with a p-value that is low but incredibly so, it seems likely there is not a strong correlation between a household having a new baby and recieving food stamps. 
+
+
+<br>
