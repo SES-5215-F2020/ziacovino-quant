@@ -15,6 +15,8 @@ mfa<- read.csv("2017 ACS Family Assistance Household.csv")%>%
   
 ```
 
+
+# Linear Regression
 ```{r}
 model <- lm(KIDS ~ SNAP + FINC + FERH + AGE, 
             data = mfa)
@@ -26,9 +28,9 @@ summary(model)
 
 <br>What we have here seems to be statistically significant finding, of very small effects on the number of children in the household. These variations on the number of related children explain about 30% of that variation. 
 
-<br> Assuming the houeshold is not receving SNAP, has no annual income, did not welcome a new child, and has an average age of zero (which of course makes zero sense) a household is likely to have three children. Every other variable has an effect of increasing the number of kids by less than one child. Logically, this doesn't make much sense but is notable: neither dependence on welfare, income, having a new baby, nor the average age of the household actually change the number of kids one has.  
+<br> Assuming the household is not receving SNAP, has no annual income, did not welcome a new child, and has an average age of zero (which of course makes zero sense) a household is likely to have three children. Every other variable has an effect of increasing the number of kids by less than one child. Logically, this doesn't make much sense but is notable: neither dependence on welfare, income, having a new baby, nor the average age of the household actually change the number of kids one has.  
 
-
+# Logistic Regression
 ```{r}
 
 
@@ -46,5 +48,5 @@ ggplot(mfa, aes(x=FINC, y=FERH)) + geom_point() +
   
 ```
 
- For a one unit change in SNAP (that is, receiving SNAP) the likelihood of having another child decreases by a factor of about .28. A $1 increase in annual income as a miniscule affect on whether someone chooses to have another child. These findings are roughly statistically significant.
+ For a one unit change in SNAP (that is, receiving SNAP) the likelihood of having another child increases by a factor of .28. A $1 increase in annual income as a miniscule affect on whether someone chooses to have another child. These findings are roughly statistically significant.
  The number of kids, with every one increase in children in the household, there is a likelihood increase of having recently had a child by a factor of .12. These are not huge effects--which again is notable. The fact of having another child is not greatly affected by receiving food assistance, income, or the number of kids already in the household. 
