@@ -1,0 +1,165 @@
+---
+title: "Assignment 5"
+author: "Zoe Iacovino"
+date: "10/5/2020"
+output: html_document
+---
+
+```{r loading libraries, data, results='hide', message =FALSE}
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+library (ggmosaic)
+library(jtools)
+library(interactions)
+library(knitr)
+mfa<- read.csv("2017 ACS Family Assistance Household.csv")%>%
+  mutate(FERHb = ifelse(FERH == "No", 0, 1))%>%
+  mutate(SNAPb = ifelse(SNAP == "No", 0, 1))%>%
+  mutate(FINC = ifelse(FINC == 0, 1, FINC))
+#I turned all the households with $0 in annual income to $1 so I could use a long transform.
+#mfa is Massachusetts 2017 ACS data aggregated to the household level, and only including houeshold with related children.  
+
+```
+
+
+## Regressions with Interactions
+
+```{r}
+model1 <- lm(KIDS ~ SNAP + FINC + FERH + AGE, 
+            data = mfa)
+model2<- lm(KIDS ~ SNAP + log(FINC) + FERH + AGE, 
+            data = mfa)
+model3<- lm(KIDS ~ SNAP + log(FINC) + FERH + AGE +
+              log(FINC):FERH, 
+            data = mfa)
+
+#Transforming the Age Variable
+mfa <- mfa %>%
+  mutate(age_bins = case_when(AGE <= 20 ~ "Under 20 Household",
+                              AGE> 20 & AGE <= 40  ~ "Younger Household",
+                              AGE>40 & AGE < 60 ~ "Middle Aged Household",
+                              AGE == 60 ~ "Older Household"))
+
+model4 <- lm(KIDS ~ SNAP + log(FINC) + FERH + age_bins + SNAP:age_bins,
+            data = mfa)
+ 
+
+```
+
+
+### Model 1: Initial Linear Regression
+```{r}
+summary(model1)
+```
+
+
+
+
+### Model 2: Log Transformed Income
+```{r}
+summary(model2)
+```
+
+
+When a household, with at least one child, see its income doubles, it has, on average, .14 more children.
+
+
+### Model 3: Interaction Term of Income and Having a Child in the last year
+```{r}
+summary(model3)
+```
+
+
+As a household's income doubles, and for families who have had a child in the last year, the number of children in the household is likely to be lower. 
+
+
+### Model 4: Age as a Categorical Variable and interaction of SNAP on Age Groups
+```{r}
+summary(model4)
+```
+
+
+The largest effect on the number of children in the household shown in any of the models is the average age of the household being under 20. This makes sense, as more children in the household will drive the average age lower. The interaction of SNAP on the average age groups is not measurable or statistically significant except for the under 20 household. 
+
+
+```{r}
+ModelFit <- tibble(model = c(1, 2, 3, 4),
+                   R_square = c(summary(model1)$adj.r.squared,
+                                summary(model2)$adj.r.squared,
+                                summary(model3)$adj.r.squared,
+                                summary(model4)$adj.r.squared))
+
+ggplot(ModelFit, aes(x = model, y = R_square)) +
+  geom_line() +
+  scale_x_continuous(name = "",
+                   breaks = breaks <- seq(1, 4, by = 1),
+                   labels = paste("Model", breaks)) +
+  scale_y_continuous(name = "Adjusted R-squared value") +
+  theme_bw()
+```
+
+
+This shows that the linear regression with no interactions is actually the best fit.
+
+
+```{r}
+coeff_names <- c("Annual Household income\n(log-transformed)" = "log(FINC)",
+                 "SNAP Recipient\n(compared to non-SNAP Recipient)" = "SNAPYes",
+                 "Average Household Age" = "AGE",
+                 "Had a Baby in Last Year" = "FERHYes",
+                 "Interaction: Household Income\n(log-transformed)\nand Baby in Last Year" =  "log(FINC):FERHYes")
+                   
+                 
+                 
+
+export_summs(model1, model3, 
+             error_format = "(p = {p.value})",
+             error_pos = "same",
+             model.names = c("Initial model", "Interactions model"),
+             coefs = coeff_names)
+```
+
+
+```{r}
+coeff_desc <- c(
+  "Recieving Snap and in a house with\n an average age over 60" = "SNAPYes:age_binsOlder Household",    
+  "Recieving SNAP and in an household with\n an average age under 20" =  "SNAPYes:age_binsUnder 20 Household",
+  "Receiving SNAP and in a house with\n an average age between 20 and 40" = "SNAPYes:age_binsYounger Household",
+  "Receiving SNAP and in a houes with\n an average age between 40 and 60" = "SNAPYes:age_binsMiddle Aged Household")
+
+plot_coefs(model4, 
+           coefs = coeff_desc,
+           plot.distributions = TRUE,
+           rescale.distributions = TRUE) +
+  scale_x_continuous(name = "Effect on predicted number of\nrelated children in household")
+```
+
+
+```{r}
+interact_plot(model3, pred = FINC, modx = FERH, interval = TRUE)+ 
+  scale_x_continuous(name = "Annual Household income") +
+  scale_y_continuous(name = "Predicted Number of Related Children")+
+  scale_color_discrete(name = "Had a Baby in the Last 12 Months") +
+  scale_linetype_discrete(name = "Had a Baby in the Last 12 Months") +
+  scale_fill_discrete(name = "Had a Baby in the Last 12 Months")+
+  theme_classic()
+```
+
+As income increases, it is more likely that households that did not have a child in the last 12 months will have more children. This could make sense that households with higher incomes are not having more children, and households who are maybe just starting their families are also in earlier stages of careers and earning less. 
+
+
+## Logistic Regression
+```{r}
+model_log <- glm(FERHb ~ SNAPb + log(FINC) + KIDS + log(FINC):KIDS, 
+            data = mfa,
+            family = binomial())
+
+summary(model_log)
+
+
+ggplot(mfa, aes(x=log(FINC), y=FERH)) + geom_point() + 
+  stat_smooth(method="glm", method.args=list(family="binomial"), se=FALSE)
+```
+
+These results are not really statistically significant. Sad! 

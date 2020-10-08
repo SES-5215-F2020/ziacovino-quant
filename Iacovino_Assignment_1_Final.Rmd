@@ -143,3 +143,17 @@ write.csv(ma_fam_assist, "2017 ACS Family Assistance Household.csv")
  <li> Does race have a measurable affect on access to SNAP for eligible families? For recent new parents?
  <li> Does family income tend to increase with age? If so are there factors that disrupt that trend?
  </ul>
+
+
+
+```{r}
+ACS_Food_Insecurity <- get_pums(variables = "FS",
+                      state = "MA",
+                      year = 2017,
+                      survey = "acs1"
+                      )%>%
+      select(FS, SERIALNO)
+
+#write.csv(ACS_Food_Insecurity, "ACS1_2017_Food_Insecurity")
+```
+
