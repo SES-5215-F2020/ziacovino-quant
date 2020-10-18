@@ -6,11 +6,12 @@ output: html_document
 ---
 
 ```{r Loading Data, results='hide', message=FALSE}
-ma_fam_assist<- read.csv("2017 ACS Family Assistance.csv")
-ma_fam_assist
+
 library(ggplot2)
 library(ggthemes)
 library(tidyverse)
+ma_fam_assist1<- read.csv("2017 ACS Family Assistance.csv")
+ma_fam_assist1
 ```
 
 *<b>Statistical Analysis</b>*

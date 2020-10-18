@@ -31,7 +31,7 @@ model1 <- lm(KIDS ~ SNAP + FINC + FERH + AGE,
 model2<- lm(KIDS ~ SNAP + log(FINC) + FERH + AGE, 
             data = mfa)
 model3<- lm(KIDS ~ SNAP + log(FINC) + FERH + AGE +
-              log(FINC):FERH, 
+              log(FINC):FERH + SNAP:FERH, 
             data = mfa)
 
 #Transforming the Age Variable
@@ -151,7 +151,7 @@ As income increases, it is more likely that households that did not have a child
 
 ## Logistic Regression
 ```{r}
-model_log <- glm(FERHb ~ SNAPb + log(FINC) + KIDS + log(FINC):KIDS, 
+model_log <- glm(FERHb ~ SNAP + FINC + KIDS + SNAP:KIDS, 
             data = mfa,
             family = binomial())
 
@@ -162,4 +162,4 @@ ggplot(mfa, aes(x=log(FINC), y=FERH)) + geom_point() +
   stat_smooth(method="glm", method.args=list(family="binomial"), se=FALSE)
 ```
 
-These results are not really statistically significant. Sad! 
+These results are not really statistically significant. We can't really say with any confidence whether or not there is a predictive relationship between SNAP, Income, the number of kids, or if being on snap Affects the number of children differently.

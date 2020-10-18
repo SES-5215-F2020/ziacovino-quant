@@ -40,7 +40,7 @@ I selected seven variables between person-level and household-level analysis to 
 <ul>
 <li>Related Children in the Household [NRC] (Continuous)
 <li>Receiving SNAP [FS] (Categorical)
-<li>Family Income [FINCP] (Continuous)
+<li>Household Income [HINCP] (Continuous)
 <li> Number of People in Household [NP] *New*
 </ul> 
 <b> Compiling Data </b>
@@ -85,7 +85,7 @@ ugh <- get_pums(variables = "FER",
 #so after all that I think I can do these all together? If I have to group the Household together anyways? (It worked)
 ma_fam_assist_raw<- get_pums(variables = c("NRC",
                                 "FS",
-                                "FINCP",
+                                "HINCP",
                                 "NP",
                                 "FER",
                                 "AGEP"
@@ -99,13 +99,13 @@ ma_fam_assist_raw<- get_pums(variables = c("NRC",
                          ) %>%
                 mutate(FER = ifelse(FER == "b", 2, FER))%>%
                 mutate(FER = ifelse(FER == 2, 0, FER), 
-                       FINCP = ifelse(FINCP < 0, 0, FINCP),
+                       HINCP = ifelse(HINCP < 0, 0, HINCP),
                        FS = ifelse(FS == 2, 0, FS))%>%
                 group_by(SERIALNO)%>%
                 summarize(
                       KIDS = mean(NRC),
                       SNAP = max(FS),
-                      FINC = sum (FINCP),
+                      FINC = max (HINCP),
                       NPL = mean(NP),
                       AGE = mean(AGEP),
                       FERH = max(FER)) %>%

@@ -1,0 +1,225 @@
+---
+title: "Quant Final Project"
+author: "Zoe Iacovino"
+date: "10/10/2020"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(ggthemes)
+library (ggmosaic)
+library(jtools)
+library(interactions)
+library(knitr)
+library(gplots)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(sf)
+mfa<- read.csv("2017 ACS Family Assistance Household.csv")%>%
+  mutate(FERHb = ifelse(FERH == "No", 0, 1))%>%
+  mutate(SNAPb = ifelse(SNAP == "No", 0, 1))%>%
+  mutate(FINC = ifelse(FINC == 0, 1, FINC))
+
+pal <- c("#D94854", "#91E0F2", "white")
+options(scipen = 999)
+```
+
+
+```{r Figure 1}
+#Distribution of Number of People in House by income, colorized by SNAP
+jpeg("fig1.jpeg", width = 1000, height = 500)
+ggplot(mfa,
+       aes(FINC, NPL, color = SNAP))+
+  geom_jitter(size = 3)+
+  scale_color_manual(values = pal) +
+  scale_y_continuous(name = "Household Size",
+    breaks = seq(1, 15, by = 1))+
+  scale_x_continuous(name = "Household Income", trans = "log10")+
+  theme_classic()
+dev.off()
+
+#Trend lines for Figure 1 
+jpeg("fig1-5.jpeg", width = 1000, height = 500)
+ggplot(mfa,
+       aes(FINC, NPL, color = SNAP))+
+  geom_smooth()+
+  scale_color_manual(values = pal) +
+  scale_y_continuous(name = "Household Size",
+    breaks = seq(1, 15, by = 1))+
+  scale_x_continuous(name = "Household Income", trans = "log10")+
+  theme_classic()
+dev.off()
+
+median(mfa$FINC)
+median(mfa$KIDS)
+median(mfa$NPL)
+median(mfa$SNAPb)
+summary(mfa$FERHb)
+
+```
+
+```{r Figure 2}
+#Correlation between SNAP and New Baby
+
+chi_sq_fer <- chisq.test(mfa$SNAP, mfa$FERH ) 
+
+chi_sq_fer
+
+chi_sq_fer$observed
+
+chi_sq_fer$expected
+
+# 1. convert the data as a table
+SNAPFERH<- as.table(as.matrix(chi_sq_fer$observed))
+SNAPFERHdf <- as.data.frame(as.matrix(chi_sq_fer$observed))
+# 2. Graph
+balloonplot(t(SNAPFERH), main ="Chi Square results of Households \nRecieving SNAP and with a New Baby in the Last 12 Months ", xlab ="", ylab="",
+            label = TRUE, show.margins = FALSE)
+
+mosaicplot(SNAPFERH, shade = TRUE, las=2,
+           main = "A new baby?")
+
+#Huge Thanks to Ryan Johnson and his Heatmap
+FERSNAP_diff <- chi_sq_fer$observed - chi_sq_fer$expected
+
+FERSNAP_diff_t <- as.data.frame(FERSNAP_diff)
+FERSNAP_diff_t
+
+FERSNAP_diff_hm <- ggplot(FERSNAP_diff_t, 
+       aes(x = mfa.SNAP,
+           y = mfa.FERH,
+           fill = Freq)) +
+  geom_tile() +
+  scale_x_discrete(name = "\nSNAP Recipient") +
+  scale_y_discrete(name = "Had a Baby in the Last Year\n") +
+  scale_fill_gradient2(name = "Difference between observed \nand expected values\n",
+                       midpoint=0, 
+                       low="dark grey", 
+                       mid="white",
+                       high="light blue", 
+                       space ="Lab")+
+  ggtitle(label = "Correlation between SNAP Recipients\nand New Baby\n")+
+  theme_classic()
+
+png("fig2.png")
+FERSNAP_diff_hm
+dev.off()
+
+```
+
+
+
+```{r Figure 3}
+model3<- lm(KIDS ~ SNAP + log(FINC) + FERH + AGE +
+              log(FINC):FERH + log(FINC):SNAP, 
+            data = mfa)
+summary(model3)
+
+
+png("fig3.png", width = 900, height = 450)
+interact_plot(model3, pred = FINC, modx = SNAP, interval = TRUE)+ 
+  scale_x_continuous(name = "Annual Household income",
+                     trans = "log10") +
+  scale_y_continuous(name = "Predicted Number of Related Children")+
+  scale_color_manual(name = "SNAP Recipients", values = pal) +
+  scale_linetype_discrete(name = "SNAP Recipients") +
+  scale_fill_manual(name = "SNAP Recipients", values = pal)+
+  annotate(geom = "text", x= 1000, y = .5, label = paste("Adjusted R Squared\n", prettyNum(summary(model3)$adj.r.squared, digits=3)))+
+  theme_classic()
+dev.off()
+
+```
+
+
+
+```{r}
+model_log <- glm(FERHb ~ SNAP + FINC + KIDS, 
+            data = mfa,
+            family = binomial())
+
+summary(model_log)
+
+png ("figure4.png", width = 800, height = 400)
+ggplot(mfa, aes(x=FINC, y=FERHb)) + geom_point() + 
+  stat_smooth(method="glm", method.args=list(family="binomial"), se=FALSE, color = "#91E0F2" )+
+  scale_y_continuous(name = "Had a Baby in last 12 Months")+
+  scale_x_continuous(name = "Family Income", trans = "log10")+
+  annotate (geom = "text", 
+            x = 100000,
+            y = 0.5,
+            label = paste("Logistic Coefficients\nSnap Recipient:",
+                          prettyNum(model_log$coefficients["SNAPYes"], digits = 3),
+                                    "\nFamily Income:",
+                          prettyNum(model_log$coefficients["log(FINC)"], digits = 3)))+
+  theme_classic()
+
+dev.off()
+
+```
+
+```{r figure 0}
+rep_caps<- c("Massachusetts",
+             "New Jersey",
+             "Illinois", 
+             "Maryland",
+             "Minnesota", 
+             "Nebraska",
+             "Oklahoma", 
+             "Wyoming")
+
+has_caps<- c("Arizona", 
+             "Arkansas",
+             "Connecticut",
+             "Delaware",
+             "Florida",
+             "Georgia",
+             "Indiana",
+             "Mississippi",
+             "North Carolina",
+             "North Dakota",
+             "South Carolina", 
+             "Tennessee",
+             "Virginia")
+
+US_states <- ne_states(country = "United States of America", 
+                       returnclass = "sf") %>%
+    filter(name != "Alaska",
+         name != "Hawaii")%>%
+  mutate(welfare_caps = case_when(
+             name == "Arizona" ~ "Has a Welfare Cap", 
+             name =="Arkansas" ~ "Has a Welfare Cap",
+             name =="Connecticut" ~ "Has a Welfare Cap",
+             name =="Delaware"~ "Has a Welfare Cap",
+             name =="Florida"~ "Has a Welfare Cap",
+             name =="Georgia"~ "Has a Welfare Cap",
+             name =="Indiana"~ "Has a Welfare Cap",
+             name =="Mississippi"~ "Has a Welfare Cap",
+             name =="North Carolina"~ "Has a Welfare Cap",
+             name =="North Dakota"~ "Has a Welfare Cap",
+             name =="South Carolina"~ "Has a Welfare Cap", 
+             name =="Tennessee"~ "Has a Welfare Cap",
+             name =="Virginia" ~ "Has a Welfare Cap",
+             name =="Massachusetts" ~ "Repealed a Welfare Cap",
+             name =="New Jersey" ~ "Repealed a Welfare Cap",
+             name =="Illinois" ~ "Repealed a Welfare Cap", 
+             name =="Maryland" ~ "Repealed a Welfare Cap",
+             name =="Minnesota" ~ "Repealed a Welfare Cap", 
+             name =="Nebraska" ~ "Repealed a Welfare Cap",
+             name =="Oklahoma" ~ "Repealed a Welfare Cap", 
+             name =="Wyoming" ~ "Repealed a Welfare Cap"))
+
+png("fig0.png", width = 1000, height = 750)
+
+US_map <- ggplot(US_states, aes(fill = welfare_caps)) +
+  geom_sf() +
+  scale_fill_manual(name = "States with Welfare Caps", values = pal, na.translate = F)+
+  theme_map()
+
+US_map
+
+dev.off()
+
+```
+
